@@ -58,7 +58,7 @@ var AcrobatMailMerge =  function(){
 	};	
 };
 
-AcrobatMailMerge.prototype.gettextBoxes = function(){
+AcrobatMailMerge.prototype.getTextBoxes = function(){
 	// returns an array of acrobat form fields which contain text
 	// that matches the target fields pattern ("<<value>>").
 	// =========================================================
@@ -85,7 +85,7 @@ AcrobatMailMerge.prototype.gettextBoxes = function(){
 	// ------------------------------------
 	if (doc.numFields === 0 ){
 		app.alert("No form fields in document. (Make sure you're using form fields and not simple text.)");
-		throw new Error("NoValidFieldsException");
+		throw new Error("No valid form fields.");
 	}
 	
 	for (var i = 0; i < doc.numFields; i++){
@@ -325,7 +325,7 @@ AcrobatMailMerge.prototype.print = function(batchSize, startIndex, endIndex){
 	// debug: may have to use apply.
 	// actually maybe not.
 	var data = this.getData();
-	var textBoxes = this.gettextBoxes();
+	var textBoxes = this.getTextBoxes();
 	var pp = this.setPrintParams();
 	console.println("set printparams");
 	
@@ -431,15 +431,11 @@ AcrobatMailMerge.prototype.print = function(batchSize, startIndex, endIndex){
 };
 
 
-
-// for testing in node.js
-// ---------------------
 // if we're in the node env, we want to export
-// the printer for testing.
+// the script for testing.
 try {
-	module.exports(AcrobatMailMerge);
+	module.exports = AcrobatMailMerge;
 } catch (e){
-	// we're in the acrojs environment;
-	// initialize a printer obj for this document
-	var amm = new AcrobatMailMerge();
+	// we're in the acrojs environment
+	var mailmerge = new AcrobatMailMerge();
 }

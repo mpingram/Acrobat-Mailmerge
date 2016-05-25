@@ -1,117 +1,138 @@
-var VariableDataPrinter = require('../acrobat_mailmerge.js');
+// shorthand for mailmerge object
+var AcrobatMailMerge = require('../acrobat_mailmerge.js');
 
 
 
 // mock Acrobat JS API constructor
 // -----------------------------
-var MockApi = function(){};
+var MockApi = function(){
 
-MockApi.prototype.app = {
+	this.app = {
+		// stores value of mock user response:
+		// 1: ok
+		// 2: cancel
+		// 3: no
+		// 4: yes
+		alertSelection: 1,
 
-	// stores value of mock user response:
-	// 1: cancel
-	// 2: ok
-	// 3: no
-	// 4: yes
-	alertSelection: 1,
+		// mimics acrojs alert box
+		alert: function(text){
+			// display message in console
+			console.log(text);
+			// return mock user response
+			return this.alertSelection;
+		},
 
-	// mimics acrojs alert box
-	alert: function(text){
-		// display message in console
-		console.log(text);
-		// return mock user response
-		return this.alertSelection;
-	},
+		printerNames: [
+			'One Printer',
+			'Two Printer',
+			'Red Printer',
+			'Blue Printer'
+		],
 
-	printerNames: [
-		'One Printer',
-		'Two Printer',
-		'Red Printer',
-		'Blue Printer'
-	],
+		// stores mock user selection to popup
+		// menu: value is the 1-based index of selection
+		popUpMenuSelection: 1,
 
-	// stores mock user selection to popup
-	// menu: value is the 1-based index of selection
-	popUpMenuSelection: 1,
-
-	popUpMenu: function(arr){
-		for (var i=0; i<arr.length; i++){
-			if (i===0){
-				// simulates acroJS popup menu behavior,
-				// first item in array is menu parent
-				console.log(arr[i] + '===>\n');
-			} else {
-				console.log('\n\t-> ' + arr[i]);
+		popUpMenu: function(arr){
+			for (var i=0; i<arr.length; i++){
+				if (i===0){
+					// simulates acroJS popup menu behavior,
+					// first item in array is menu parent
+					console.log(arr[i] + '===>\n');
+				} else {
+					console.log('\n\t-> ' + arr[i]);
+				}
 			}
+			// selection doesn't really matter, so just
+			// choose the first child
+			return this.popUpMenuSelection;
 		}
-		// selection doesn't really matter, so just
-		// choose the first child
-		return popUpMenuSelection;
-	}
+	};
+
+	this.doc = {
+
+		// default set of mimic form fields for the doc
+		mockFields: [ 
+			{
+			 	name: 'One Field',
+				value: '<<test>>'
+			},
+			{ 
+				name: 'Two Field',
+				value: '<<test>>'
+			},
+			{ 
+				name: 'Red Field',
+				value: '<<field 2>>'
+			},
+			{
+				name: 'Blue Field',
+			 	value: '<<test>>'
+			}
+		],
+
+
+
+		// stores the mimic form fields in the document.
+		// this is the value that gets referenced by the script.
+		fields: this.mockFields,
+
+		// NOTE: updateNumFields needs to be called each
+		// time doc.fields is changed.
+		numFields: 4,
+
+		updateNumFields: function(){
+			var num = this.fields.length;
+			this.numFields = num;
+		},
+
+		getField: function(name){
+			for (var i = 0; i < this.fields.length; i++){
+				if (this.fields[i].name === name){
+					return this.fields[i];
+				}
+			}
+			return null;
+		},
+
+		getNthFieldName: function(n){
+			return this.fields[n].name;
+		},
+
+		getPrintParams: function(){
+			return {
+				'constants': {
+					'interactionLevel': ''
+				}
+			};
+		},
+		
+		print: function(){
+			return 'Printing...';
+		}
+	};
+
+	this.util = {
+
+		// mock data to be read into stream
+		mockData: `test	field 2	field 3	field 4
+JUVO	RQNZ	ESNR	OZLY
+CMAI	XECU	UXYN	WNUR
+YCEE	ADHO	WMCE	WSNK
+HUUX	DCEN	DWUX	FCFX
+CXAI	XDBT	INNP	MOZM`,
+
+		readFileIntoStream: function(){
+			return null;
+		},
+		stringFromStream: function(){
+			return this.mockData;
+		}
+	};
 };
 
-MockApi.prototype.doc = {
-
-	numFields: 4,
-
-	fields: [ 
-		{
-		 	name: 'One Field',
-			value: '<<test>>'
-		},
-		{ 
-			name: 'Two Field',
-			value: '<<test>>'
-		},
-		{ 
-			name: 'Red Field',
-			value: '<<field 2>>'
-		},
-		{
-			name: 'Blue Field',
-		 	value: '<<test>>'
-		}
-	],
-
-	getField: function(name){
-		for (var i = 0; i < this.fields.length; i++){
-			if (this.fields[i].name === name){
-				return this.fields[i];
-			}
-		}
-		return null;
-	},
-
-	getNthFieldName: function(n){
-		return this.fields[n].name;
-	},
-
-	getPrintParams: function(){
-		return {
-			'constants': {
-				'interactionLevel': ''
-			}
-		};
-	},
-	
-	print: function(){
-		return 'Printing...';
-	}
-};
-
-MockApi.prototype.util = {
-	readFileIntoStream: function(){
-		return null;
-	},
-	stringFromStream: function(){
-		return mockData;
-	}
-};
 // ----------------------------
-
-// initializing printer instance
-var mailMerge = new AcrobatMailMerge();
-
 
 
 
@@ -124,13 +145,39 @@ describe('mailMerge.getTextBoxes', function(){
 
 	var mock = new MockApi();
 	var app = mock.app;
-	var data = mock.data;
-	var util = mock.util;
+	var doc = mock.doc;
+
+	// initializing new mailmerger
+	var merge = new AcrobatMailMerge();
+
+	it('should detect if there are no form fields', function(){
+		doc.fields = [];
+		expect(merge.getTextBoxes().toThrowErr('No valid form fields.'));
+	});
 
 
+	it('should detect if form fields are invalid', function(){
+
+		doc.fields = [{
+			'name':'one field',
+			'value': 'not valid'
+		}];
+		doc.updateNumFields();
+		expect(merge.getTextBoxes().toThrowErr('No valid form fields.'));
+
+		doc.fields.push({
+			'name':'two field',
+			'value': 'still not valid'
+		});
+		doc.updateNumFields();
+		expect(merge.getTextBoxes().toThrowErr('No valid form fields.'));
+	});
+
+	it('should return the only valid field without prompting', function(){
+
+	});
 
 	it('should ', function(){
-
 
 	});
 });
@@ -140,13 +187,6 @@ describe('mailMerge.getData', function(){
 });
 
 describe('mailMerge.CSVtoJSON', function(){
-	// mock CSV data
-	var mockData = `test	field 2	field 3	field 4
-JUVO	RQNZ	ESNR	OZLY
-CMAI	XECU	UXYN	WNUR
-YCEE	ADHO	WMCE	WSNK
-HUUX	DCEN	DWUX	FCFX
-CXAI	XDBT	INNP	MOZM`;
 
 });
 
