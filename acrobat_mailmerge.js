@@ -1,14 +1,11 @@
 
-/* 
-for reference:
-app.alert returns the type of the button that was pressed by the user:
-1 — OK
-2 — Cancel
-3 — No
-4 — Yes
-*/
+// Init for acrojs environment
+// -------------------------------------
 
-// stopgap until we can figure out how app.activeDocs works
+
+// binds a reference to active document
+// TODO: make sure this doesn't cause weird bugs when multiple
+// docs are open.
 var doc = this;
 
 // polyfill may be necessary for acrojs
@@ -40,13 +37,15 @@ if (!Array.prototype.forEach) {
     }
   };
 }
+// -------------------------------
 
-var VariableDataPrinter =  function(){
+
+var AcrobatMailMerge =  function(){
 	this.locals = {
 
 		targetFieldsRegex: /<<(.+?)>>/g ,
 		targetFieldsRegexNoFlags: /<<(.+?)>>/ ,
-		// matches conditional blocks ("[This is a <<possiblyNullValue>>.]").
+		// matches conditional formatting blocks (e.g. "[This is a <<possiblyNullValue>>.]").
 		conditionalBlocksRegex: /\[[^\[]*?<>[^\]]*?\]|<|>|\[|\]/g ,
 		
 		// flag marks whether multiple fields each map to one record (false)
@@ -59,7 +58,7 @@ var VariableDataPrinter =  function(){
 	};	
 };
 
-VariableDataPrinter.prototype.gettextBoxes = function(){
+AcrobatMailMerge.prototype.gettextBoxes = function(){
 	// returns an array of acrobat form fields which contain text
 	// that matches the target fields pattern ("<<value>>").
 	// =========================================================
@@ -69,18 +68,15 @@ VariableDataPrinter.prototype.gettextBoxes = function(){
 
 	// helper function which compares text inside textBoxes
 	var haveDifferentValues = function(array){
-		
 		if (array.length === 1 ){
 			return false;
 		}
-		
 		for (var i = 1; i < array.length; i++){
 			
 			if (array[i].value !== array[i-1].value){
 					return true;
 			}
 		}
-
 		return false;
 	};
 	
@@ -89,7 +85,7 @@ VariableDataPrinter.prototype.gettextBoxes = function(){
 	// ------------------------------------
 	if (doc.numFields === 0 ){
 		app.alert("No form fields in document. (Make sure you're using form fields and not simple text.)");
-		throw "NoValidFieldsException";
+		throw new Error("NoValidFieldsException");
 	}
 	
 	for (var i = 0; i < doc.numFields; i++){
@@ -108,7 +104,7 @@ VariableDataPrinter.prototype.gettextBoxes = function(){
 	if (textBoxes.length === 0){
 		app.alert("The program did not identify any valid fields. " +
 		"Please double-check your formatting and try again.");
-		throw "NoValidFieldsException";
+		throw new Error("No valid form fields.");
 	}
 	
 	// if the search finds more than one field, we
@@ -142,19 +138,17 @@ VariableDataPrinter.prototype.gettextBoxes = function(){
 	userReport += "\nIf anything is wrong with this, please click 'Cancel,' check your formatting, and try again.";
 	var userResponse = app.alert(userReport, 4, 1);
 	// if user clicks "cancel", end program.
-	// DEBUG: is this the right number?
 	if (userResponse === 2){
-		throw "UserCancelException";
+		throw new Error("UserCancelException");
 	}
 	
 	
 	// returning array of valid text boxes.
 	// --------------------------------------
 	return textBoxes;
-
 };
 
-VariableDataPrinter.prototype.getData = function(){
+AcrobatMailMerge.prototype.getData = function(){
 	
 	var binData;
 	var stringData;
@@ -173,7 +167,7 @@ VariableDataPrinter.prototype.getData = function(){
 	binData = util.readFileIntoStream();
 	
 	if (binData === null){
-		throw "UserCancelException";
+		throw new Error("UserCancelException");
 	}
 	// debug
 	console.println("binData: " + binData);
@@ -189,13 +183,10 @@ VariableDataPrinter.prototype.getData = function(){
 	return JSONData;
 };
 
-VariableDataPrinter.prototype.CSVtoJSON = function(csv, separator){
+AcrobatMailMerge.prototype.CSVtoJSON = function(csv, separator){
 	// adapted from http://blaiprat.github.io/tsvToJson/
 	// mpingram - this is really bad, needs work. but if you
 	// handle it carefully it won't break
-
-
-
 	
 	separator = separator || "\t";
     var info = csv.replace(/['"]/g,"");
@@ -225,10 +216,9 @@ VariableDataPrinter.prototype.CSVtoJSON = function(csv, separator){
     });
 
     return json;
-
 };
 
-VariableDataPrinter.prototype.setPrintParams = function(){
+AcrobatMailMerge.prototype.setPrintParams = function(){
 	// debug
 	console.println("setting print params");
 	
@@ -251,7 +241,7 @@ VariableDataPrinter.prototype.setPrintParams = function(){
 		switch (printerSelection){
 			// cancel
 			case 2: 
-				throw "UserCancelException";
+				throw new Error("UserCancelException");
 			// yes
 			case 4:
 				pp.printerName = this.locals.printerName;
@@ -274,7 +264,7 @@ VariableDataPrinter.prototype.setPrintParams = function(){
 		// if user clicks outside the popup menu,
 		// popupmenu returns null and program terminates.
 		if (printerSelection === null){
-			throw "UserCancelException";
+			throw new Error("UserCancelException");
 		
 		// else set printParams name to user's selection
 		} else {
@@ -287,18 +277,15 @@ VariableDataPrinter.prototype.setPrintParams = function(){
 	// when a pdf is printed. 
 	// This should be used in conjunction with a printer driver
 	// that does also not generate popup boxes on a print event
-	// for true silent printing.
+	// for uninterrupted printing of each document. 
 	pp.bUI = false;
 	pp.bSilent=true;
 	pp.interactive = pp.constants.interactionLevel.automatic;	
 
-	// debug - this should work? it is just an object after all...
-
-	return (pp);
-	
+	return (pp);	
 };
 
-VariableDataPrinter.prototype.print = function(batchSize, startIndex, endIndex){
+AcrobatMailMerge.prototype.print = function(batchSize, startIndex, endIndex){
 	
 	// Point of entry for program.
 	// ================================
@@ -378,7 +365,7 @@ VariableDataPrinter.prototype.print = function(batchSize, startIndex, endIndex){
 				// if user cancels, set lastIndexPrinted and exit program
 				if (batchPromptChoice === 2){
 					this.locals.lastIndexPrinted = i;
-					throw "UserCancelException";
+					throw new Error("UserCancelException");
 				}
 				// otherwise continue
 			}	
@@ -440,8 +427,19 @@ VariableDataPrinter.prototype.print = function(batchSize, startIndex, endIndex){
 	// once loop is done,
 	// clear globals and terminate program.
 	this.locals.lastIndexPrinted = undefined;
-	return "Finished";
-	
+	return "Finished";	
 };
 
-var vdp = new VariableDataPrinter();
+
+
+// for testing in node.js
+// ---------------------
+// if we're in the node env, we want to export
+// the printer for testing.
+try {
+	module.exports(AcrobatMailMerge);
+} catch (e){
+	// we're in the acrojs environment;
+	// initialize a printer obj for this document
+	var amm = new AcrobatMailMerge();
+}

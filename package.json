@@ -1,0 +1,26 @@
+{
+  "name": "acrobat-mailmerge",
+  "version": "1.0.0",
+  "description": "Script which adds mailmerge functionality to Adobe Acrobat 10+",
+  "main": "Variable_Data_Printer.js",
+  "directories": {
+    "test": "spec"
+  },
+  "scripts": {
+    "test": "jasmine-node spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mpingram/Acrobat-Mailmerge.git"
+  },
+  "author": "Michael Ingram",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mpingram/Acrobat-Mailmerge/issues"
+  },
+  "homepage": "https://github.com/mpingram/Acrobat-Mailmerge#readme",
+  "devDependencies": {
+    "jasmine": "^2.4.1",
+    "jasmine-node": "^1.14.5"
+  }
+}
