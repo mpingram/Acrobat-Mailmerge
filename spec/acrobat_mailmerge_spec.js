@@ -188,7 +188,7 @@ describe('mailMerge.getTextBoxes', function(){
 		doc.updateNumFields();
 		merge = mailmerge(api);
 
-		expect(merge.getTextBoxes().toThrow(formFieldsException));
+		expect(merge.getTextBoxes).toThrow(formFieldsException);
 	});
 
 	it('should return the only valid field without prompting', function(){

@@ -66,21 +66,19 @@ var AcrobatMailMerge =  function(mockApi){
 
 	var self = {};
 
-	self.locals = {
+	// private vars
+	// ----------------------
+	var targetFieldsRegex = /<<(.+?)>>/g;
+	var targetFieldsRegexNoFlags = /<<(.+?)>>/;
+	var conditionalBlocksRegex = /\[[^\[]*?<>[^\]]*?\]|<|>|\[|\]/g;
 
-		targetFieldsRegex: /<<(.+?)>>/g ,
-		targetFieldsRegexNoFlags: /<<(.+?)>>/ ,
-		// matches conditional formatting blocks (e.g. '[This is a <<possiblyNullValue>>.]').
-		conditionalBlocksRegex: /\[[^\[]*?<>[^\]]*?\]|<|>|\[|\]/g ,
-		
-		// flag marks whether multiple fields each map to one record (false)
-		// or multiple fields map to multiple records (true)
-		splitFields: false,
-		
-		// object scope variables
-		printerName: undefined,
-		lastIndexPrinted : undefined	
-	};
+	// flag marks whether multiple fields each map to one record (false)
+	// or multiple fields map to multiple records (true)
+	var splitFields = false;
+	var printerName = undefined;
+	var lastIndexPrinted = undefined;
+
+	// ---------------------------
 
 	// returns an array of acrobat form fields which contain text
 	// that matches the target fields pattern ('<<value>>').
@@ -116,8 +114,7 @@ var AcrobatMailMerge =  function(mockApi){
 			thisBox = doc.getField(doc.getNthFieldName(i));	
 			
 			// if the text box's content matches the pattern, store that field.
-			console.log(self.locals);
-			if (self.locals.targetFieldsRegexNoFlags.test(thisBox.value)) {
+			if (targetFieldsRegexNoFlags.test(thisBox.value)) {
 				textBoxes.push(thisBox);
 			}
 		}
@@ -144,15 +141,15 @@ var AcrobatMailMerge =  function(mockApi){
 
 			// set splitFields flag to true if any of the valid text boxes are different.
 			// DEBUG
-			console.println('before function splitfields is ' + this.locals.splitFields);
-			this.locals.splitFields = haveDifferentValues( textBoxes );
+			console.println('before function splitfields is ' + splitFields);
+			splitFields = haveDifferentValues( textBoxes );
 			// DEBUG
-			console.println('after function splitfields is ' + this.locals.splitFields);
+			console.println('after function splitfields is ' + splitFields);
 			
-			if (this.locals.splitFields === true) {
+			if (splitFields === true) {
 				userReport += 	'These fields are NOT identical. ' + 
 							'The program will print the contents of one data record to ALL of them.';
-			} else if (this.locals.splitFields === false) {
+			} else if (splitFields === false) {
 				userReport += 	'These fields ARE identical. '+
 							'The program will print the contents of one data record to EACH of them.';
 			}
@@ -254,9 +251,9 @@ var AcrobatMailMerge =  function(mockApi){
 		
 		
 		// check for previous job's printer if any
-		if (this.locals.printerName !== undefined){
+		if (printerName !== undefined){
 			
-			printerSelection = app.alert(	'You printed the previous job to printer: ' + this.locals.printerName + '. ' +
+			printerSelection = app.alert(	'You printed the previous job to printer: ' + printerName + '. ' +
 						'\nClick \'Yes\' to use this printer again and \'No\' to use a different printer.', 4, 3);
 			switch (printerSelection){
 				// cancel
@@ -264,18 +261,18 @@ var AcrobatMailMerge =  function(mockApi){
 					throw new Error('UserCancelException');
 				// yes
 				case 4:
-					pp.printerName = this.locals.printerName;
+					pp.printerName = printerName;
 					break;
 				// no
 				case 3:
-					this.locals.printerName = undefined;
+					printerName = undefined;
 					break;
 			}
 			
 		} 
 		
 		// wonky logic so that previous if statement takes effect.
-		if( this.locals.printerName === undefined ){
+		if( printerName === undefined ){
 		
 			// app.popUpMenu uses first element of array as menu title.
 			printers.unshift('Print to...');
@@ -289,7 +286,7 @@ var AcrobatMailMerge =  function(mockApi){
 			// else set printParams name to user's selection
 			} else {
 				pp.printerName  = printerSelection;
-				this.locals.printerName = printerSelection;
+				printerName = printerSelection;
 			}
 		}
 		
@@ -319,19 +316,19 @@ var AcrobatMailMerge =  function(mockApi){
 		startIndex = startIndex || 0;
 		
 		// checking for unprinted pages
-		if (this.locals.lastIndexPrinted !== undefined && typeof this.locals.lastIndexPrinted === 'number'){
-			var userChoice = app.alert('You halted the previous printing job after printing ' + (this.locals.lastIndexPrinted + 1) +
+		if (lastIndexPrinted !== undefined && typeof lastIndexPrinted === 'number'){
+			var userChoice = app.alert('You halted the previous printing job after printing ' + (lastIndexPrinted + 1) +
 					' documents. Would you like to continue printing from the last document printed?' +
 					' Pressing \'No\' will run the print job from the start document ' + 
 					'(document ' + ( startIndex + 1) + ').',3,2);
 
 			// yes
 			if (userChoice === 3){
-				startIndex = this.locals.lastIndexPrinted + 1;
+				startIndex = lastIndexPrinted + 1;
 				
 			// no
 			} else {
-				this.locals.lastIndexPrinted = undefined;
+				lastIndexPrinted = undefined;
 			}
 		}
 		
@@ -375,7 +372,7 @@ var AcrobatMailMerge =  function(mockApi){
 					
 					// if user cancels, set lastIndexPrinted and exit program
 					if (batchPromptChoice === 2){
-						this.locals.lastIndexPrinted = i;
+						lastIndexPrinted = i;
 						throw new Error('UserCancelException');
 					}
 					// otherwise continue
@@ -396,13 +393,13 @@ var AcrobatMailMerge =  function(mockApi){
 				}
 				
 				// replace <<fieldnames>> with <values>
-				textBoxes[k].value = textBoxes[k].value.replace( this.locals.targetFieldsRegex , replacer);				
+				textBoxes[k].value = textBoxes[k].value.replace( targetFieldsRegex , replacer);				
 				// delete any empty conditional blocks. '[ So <> empty ]'.
-				textBoxes[k].value = textBoxes[k].value.replace( this.locals.ConditionalBlocksRegex, '' );
+				textBoxes[k].value = textBoxes[k].value.replace( ConditionalBlocksRegex, '' );
 				
 				// if each text box corresponds to one record,
 				// we need to advance the counter to the next record.
-				if (this.locals.splitFields){
+				if (splitFields){
 					i++;
 				}
 			}
@@ -429,7 +426,7 @@ var AcrobatMailMerge =  function(mockApi){
 		
 		// once loop is done,
 		// clear globals and terminate program.
-		this.locals.lastIndexPrinted = undefined;
+		lastIndexPrinted = undefined;
 		return 'Finished';		
 	};
 
