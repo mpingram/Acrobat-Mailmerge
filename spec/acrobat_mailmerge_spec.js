@@ -1,10 +1,10 @@
-var AcrobatMailMerge = require('../acrobat_mailmerge.js');
+var mailmerge = require('../acrobat_mailmerge.js');
 
 
 
 // mock Acrobat JS API factory
 // -----------------------------
-var MockApi = function(){
+var mockApi = function(){
 	var self = {};
 
 	self.app = {
@@ -53,7 +53,7 @@ var MockApi = function(){
 	self.doc = {
 
 		// default set of mimic form fields for the doc
-		mockFields: [ 
+		fields: [ 
 			{
 			 	name: 'One Field',
 				value: '<<test>>'
@@ -72,11 +72,6 @@ var MockApi = function(){
 			}
 		],
 
-
-
-		// stores the mimic form fields in the document.
-		// this is the value that gets referenced by the script.
-		fields: this.mockFields,
 
 		// NOTE: updateNumFields needs to be called each
 		// time doc.fields is changed.
@@ -145,25 +140,35 @@ var MockApi = function(){
 // ------------------
 describe('mailMerge.getTextBoxes', function(){
 
-	var mock = MockApi();
-	console.log(mock);
-	var app = mock.app;
-	var doc = mock.doc;
-
-	var merge;
+	// ------------------
+	var api; 
+	var app;
+	var doc;
+	var util; 
+	// stores initialized mailmerge object
+	// needs to be reinitialized after
+	// changes are made to mock api's state
+	var merge = mailmerge(api);
 
 	beforeEach(function(){
-		// instantiate new mail merge
-		// with current api
-		merge = AcrobatMailMerge(mock);
+		// reinitialize api
+		api = mockApi();
+		app = api.app;
+		doc = api.doc;
+		util = api.util;
 	});
-	
+
+	var formFieldsException = new Error('No valid form fields.');
+	// -------------------
+
+
 
 	it('should detect if there are no form fields', function(){
 		doc.fields = [];
-		expect(merge.getTextBoxes().toThrowErr('No valid form fields.'));
+		doc.updateNumFields();
+		merge = mailmerge(api);
+		expect(merge.getTextBoxes).toThrow(formFieldsException);
 	});
-
 
 	it('should detect if form fields are invalid', function(){
 
@@ -172,14 +177,18 @@ describe('mailMerge.getTextBoxes', function(){
 			'value': 'not valid'
 		}];
 		doc.updateNumFields();
-		expect(merge.getTextBoxes().toThrowErr('No valid form fields.'));
+		merge = mailmerge(api);
+
+		expect(merge.getTextBoxes).toThrow(formFieldsException);
 
 		doc.fields.push({
 			'name':'two field',
 			'value': 'still not valid'
 		});
 		doc.updateNumFields();
-		expect(merge.getTextBoxes().toThrowErr('No valid form fields.'));
+		merge = mailmerge(api);
+
+		expect(merge.getTextBoxes().toThrow(formFieldsException));
 	});
 
 	it('should return the only valid field without prompting', function(){

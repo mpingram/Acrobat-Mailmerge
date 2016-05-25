@@ -85,7 +85,7 @@ var AcrobatMailMerge =  function(mockApi){
 	// returns an array of acrobat form fields which contain text
 	// that matches the target fields pattern ('<<value>>').
 	self.getTextBoxes = function(){
-
+		var self = this;
 		var textBoxes = [];
 		var thisBox;
 
@@ -116,7 +116,8 @@ var AcrobatMailMerge =  function(mockApi){
 			thisBox = doc.getField(doc.getNthFieldName(i));	
 			
 			// if the text box's content matches the pattern, store that field.
-			if (this.locals.targetFieldsRegexNoFlags.test(thisBox.value)) {
+			console.log(self.locals);
+			if (self.locals.targetFieldsRegexNoFlags.test(thisBox.value)) {
 				textBoxes.push(thisBox);
 			}
 		}
