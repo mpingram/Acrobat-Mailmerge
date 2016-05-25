@@ -1,14 +1,13 @@
 
 // Init for acrojs environment
-// -------------------------------------
-
-
+// ----------------------------
 // binds a reference to active document
 // TODO: make sure this doesn't cause weird bugs when multiple
 // docs are open.
 var doc = this;
 
 // polyfill may be necessary for acrojs
+// TODO: do I really need this?
 // Production steps of ECMA-262, Edition 5, 15.4.4.18
 // Reference: http://es5.github.io/#x15.4.4.18
 if (!Array.prototype.forEach) {
@@ -37,10 +36,14 @@ if (!Array.prototype.forEach) {
     }
   };
 }
-// -------------------------------
+// ----------------------------
 
+
+// AcrobatMailMerge factory
+// ============================
 
 var AcrobatMailMerge =  function(){
+
 	this.locals = {
 
 		targetFieldsRegex: /<<(.+?)>>/g ,
@@ -430,12 +433,18 @@ AcrobatMailMerge.prototype.print = function(batchSize, startIndex, endIndex){
 	return "Finished";	
 };
 
+// ==============================
+
+
+// exporting 
+// ------------------------------
 
 // if we're in the node env, we want to export
-// the script for testing.
+// as a module for testing.
 try {
 	module.exports = AcrobatMailMerge;
 } catch (e){
-	// we're in the acrojs environment
+	// if that code can't execute,
+	// assume we're in the acrojs environment
 	var mailmerge = new AcrobatMailMerge();
 }
