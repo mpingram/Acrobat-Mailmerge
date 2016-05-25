@@ -1,3 +1,5 @@
+'use strict';
+
 var mailmerge = require('../acrobat_mailmerge.js');
 
 
@@ -7,6 +9,8 @@ var mailmerge = require('../acrobat_mailmerge.js');
 var mockApi = function(){
 	var self = {};
 
+
+
 	self.app = {
 		// stores value of mock user response:
 		// 1: ok
@@ -15,10 +19,14 @@ var mockApi = function(){
 		// 4: yes
 		alertSelection: 1,
 
+		silentAlerts: false,
+
 		// mimics acrojs alert box
 		alert: function(text){
 			// display message in console
-			console.log(text);
+			if (!this.silentAlerts){
+				console.log(text);
+			}
 			// return mock user response
 			return this.alertSelection;
 		},
@@ -138,7 +146,7 @@ var mockApi = function(){
 
 // components
 // ------------------
-describe('mailMerge.getTextBoxes', function(){
+describe('mailmerge.getTextBoxes', function(){
 
 	// ------------------
 	var api; 
@@ -150,23 +158,36 @@ describe('mailMerge.getTextBoxes', function(){
 	// changes are made to mock api's state
 	var merge = mailmerge(api);
 
+	// helper function - needs
+	// to be called after api's state is
+	// changed.
+	var init = function(){
+		doc.updateNumFields();
+		merge = mailmerge(api);
+
+	};
+
+	var formFieldsException = new Error('No valid form fields.');
+
+	// -------------------
+
 	beforeEach(function(){
 		// reinitialize api
 		api = mockApi();
 		app = api.app;
 		doc = api.doc;
 		util = api.util;
+		// if active test suite, turn this
+		// back off to see app.alert messages.
+		app.silentAlerts = true;
 	});
-
-	var formFieldsException = new Error('No valid form fields.');
-	// -------------------
 
 
 
 	it('should detect if there are no form fields', function(){
 		doc.fields = [];
-		doc.updateNumFields();
-		merge = mailmerge(api);
+		init();
+
 		expect(merge.getTextBoxes).toThrow(formFieldsException);
 	});
 
@@ -176,8 +197,7 @@ describe('mailMerge.getTextBoxes', function(){
 			'name':'one field',
 			'value': 'not valid'
 		}];
-		doc.updateNumFields();
-		merge = mailmerge(api);
+		init();
 
 		expect(merge.getTextBoxes).toThrow(formFieldsException);
 
@@ -185,40 +205,80 @@ describe('mailMerge.getTextBoxes', function(){
 			'name':'two field',
 			'value': 'still not valid'
 		});
-		doc.updateNumFields();
-		merge = mailmerge(api);
+		init();
 
 		expect(merge.getTextBoxes).toThrow(formFieldsException);
 	});
 
-	it('should return the only valid field without prompting', function(){
+	it('should return the only valid field without further prompting', function(){
 
+		doc.fields = [{
+			name: 'red field',
+			value: 'This field is <<valid>>'
+		},
+		{
+			name: 'blue field',
+			value: '< This Field is >> not < valid.'
+		}];
+		init();
+
+		expect(merge.getTextBoxes()).toEqual([doc.fields[0]]);
 	});
 
 	it('should return the correct number of valid fields', function(){
+		doc.fields = [
+			{
+				'name': 'one field',
+				'value': '<<valid>>'
+			},
+			{
+				'name': 'two field',
+				'value': 'also <<valid>>'
+			},
+			{
+				'name': 'red field',
+				'value': 'invalid',
+			},
+			{
+				'name': 'blue field',
+				'value': 'this ones good <<tho>>',
+			},
+			{
+				'name': 'last field',
+				'value': 'but it\'s not good.'
+			}];
 
+		var validSolution = [
+			doc.fields[0],
+			doc.fields[1],
+			doc.fields[3]
+		];
+
+		init();
+		expect(merge.getTextBoxes()).toEqual(validSolution);
 	});
-});
-
-describe('mailMerge.getData', function(){
 
 });
 
-describe('mailMerge.CSVtoJSON', function(){
+describe('mailmerge.getData', function(){
 
 });
 
-describe('mailMerge.setPrintParams', function(){
+describe('mailmerge.csvToJson', function(){
+
+});
+
+describe('mailmerge.setPrintParams', function(){
 
 });
 
 
-describe('mailMerge.print', function(){
+describe('mailmerge.print', function(){
 });
 
 
 // end to end
 // ------------------
-describe('mailMerge', function(){
+describe('mailmerge', function(){
 
 });

@@ -60,6 +60,8 @@ var AcrobatMailMerge =  function(mockApi){
 			var doc = mockApi.doc;
 			var util = mockApi.util;
 		}
+
+
 	}
 	// otherwise, assume we're running in AcroJS environment
 	// and we don't need to inject anything.
@@ -140,11 +142,7 @@ var AcrobatMailMerge =  function(mockApi){
 		if (textBoxes.length > 1){
 
 			// set splitFields flag to true if any of the valid text boxes are different.
-			// DEBUG
-			console.println('before function splitfields is ' + splitFields);
 			splitFields = haveDifferentValues( textBoxes );
-			// DEBUG
-			console.println('after function splitfields is ' + splitFields);
 			
 			if (splitFields === true) {
 				userReport += 	'These fields are NOT identical. ' + 
@@ -191,12 +189,9 @@ var AcrobatMailMerge =  function(mockApi){
 		if (binData === null){
 			throw new Error('UserCancelException');
 		}
-		// debug
-		console.println('binData: ' + binData);
 		// stringifies binary stream
 		stringData = util.stringFromStream(binData);
-		// debug
-		console.println('stringData: ' + stringData);
+		
 		// parses csv and converts to json.
 		// debug
 		//jsonData = this.csvToJson(stringData, '\t');
