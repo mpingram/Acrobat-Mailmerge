@@ -135,8 +135,6 @@ var mockApi = function(){
 
 	return self;
 };
-
-
 // ----------------------------
 
 
@@ -146,7 +144,8 @@ var mockApi = function(){
 
 // components
 // ------------------
-describe('mailmerge.getTextBoxes', function(){
+describe('merge.getTextBoxes', function(){
+
 
 	// ------------------
 	var api; 
@@ -158,13 +157,11 @@ describe('mailmerge.getTextBoxes', function(){
 	// changes are made to mock api's state
 	var merge = mailmerge(api);
 
-	// helper function - needs
-	// to be called after api's state is
-	// changed.
+	// helper function - needs to be called
+	// after api's state is changed
 	var init = function(){
 		doc.updateNumFields();
 		merge = mailmerge(api);
-
 	};
 
 	var formFieldsException = new Error('No valid form fields.');
@@ -187,7 +184,6 @@ describe('mailmerge.getTextBoxes', function(){
 	it('should detect if there are no form fields', function(){
 		doc.fields = [];
 		init();
-
 		expect(merge.getTextBoxes).toThrow(formFieldsException);
 	});
 
@@ -198,7 +194,6 @@ describe('mailmerge.getTextBoxes', function(){
 			'value': 'not valid'
 		}];
 		init();
-
 		expect(merge.getTextBoxes).toThrow(formFieldsException);
 
 		doc.fields.push({
@@ -206,7 +201,6 @@ describe('mailmerge.getTextBoxes', function(){
 			'value': 'still not valid'
 		});
 		init();
-
 		expect(merge.getTextBoxes).toThrow(formFieldsException);
 	});
 
@@ -221,7 +215,6 @@ describe('mailmerge.getTextBoxes', function(){
 			value: '< This Field is >> not < valid.'
 		}];
 		init();
-
 		expect(merge.getTextBoxes()).toEqual([doc.fields[0]]);
 	});
 
@@ -257,18 +250,53 @@ describe('mailmerge.getTextBoxes', function(){
 		init();
 		expect(merge.getTextBoxes()).toEqual(validSolution);
 	});
+});
+
+describe('merge.getData', function(){
+
+	// ------------------
+	var api; 
+	var app;
+	var doc;
+	var util; 
+	// stores initialized mailmerge object
+	// needs to be reinitialized after
+	// changes are made to mock api's state
+	var merge = mailmerge(api);
+
+	// helper function - needs to be called
+	// after api's state is changed
+	var init = function(){
+		doc.updateNumFields();
+		merge = mailmerge(api);
+	};
+
+	var userCancelException = new Error('UserCancelException');
+	// -------------------
+
+	beforeEach(function(){
+		// reinitialize api
+		api = mockApi();
+		app = api.app;
+		doc = api.doc;
+		util = api.util;
+		// if active test suite, turn this
+		// back off to see app.alert messages.
+		app.silentAlerts = true;
+	});
+
+	it('should stop the function on user cancellation', function(){
+		app.alertResponse = 2;
+		init();
+		expect(merge.getData).toThrow(userCancelException);
+	});
+});
+
+describe('merge.csvToJson', function(){
 
 });
 
-describe('mailmerge.getData', function(){
-
-});
-
-describe('mailmerge.csvToJson', function(){
-
-});
-
-describe('mailmerge.setPrintParams', function(){
+describe('merge.setPrintParams', function(){
 
 });
 

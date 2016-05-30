@@ -1,3 +1,7 @@
+// FOR DEVELOPMENT
+// TODO: replace with actual thing
+var csvParser = require('../Utils/CSV_parser/lightweight-csv-parser.js');
+
 
 // Init for acrojs environment
 // ----------------------------
@@ -46,7 +50,6 @@ var AcrobatMailMerge =  function(mockApi){
 	// injects mock API if it's passed as an argument
 	// to the factory
 	if (mockApi) {
-
 		// verify api is ok
 		if (	typeof mockApi 		!== 'object' ||
 					mockApi.app 	=== undefined ||
@@ -60,8 +63,6 @@ var AcrobatMailMerge =  function(mockApi){
 			var doc = mockApi.doc;
 			var util = mockApi.util;
 		}
-
-
 	}
 	// otherwise, assume we're running in AcroJS environment
 	// and we don't need to inject anything.
@@ -191,7 +192,7 @@ var AcrobatMailMerge =  function(mockApi){
 		}
 		// stringifies binary stream
 		stringData = util.stringFromStream(binData);
-		
+
 		// parses csv and converts to json.
 		// debug
 		//jsonData = this.csvToJson(stringData, '\t');
@@ -427,7 +428,7 @@ var AcrobatMailMerge =  function(mockApi){
 
 	return self;
 };
-// ==============================
+// ============================
 
 
 // exporting 
