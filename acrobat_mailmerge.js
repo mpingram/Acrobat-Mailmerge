@@ -1,6 +1,8 @@
 // FOR DEVELOPMENT
-// TODO: replace with actual thing
-var csvParser = require('../Utils/CSV_parser/lightweight-csv-parser.js');
+// --------------------
+var csvParser = require('../../Utils/CSV_parser/lightweight-csv-parser.js');
+var parser = csvParser();
+// --------------------
 
 
 // Init for acrojs environment
@@ -10,43 +12,14 @@ var csvParser = require('../Utils/CSV_parser/lightweight-csv-parser.js');
 // docs are open.
 var doc = this;
 
-// polyfill may be necessary for acrojs
-// TODO: do I really need this?
-// Production steps of ECMA-262, Edition 5, 15.4.4.18
-// Reference: http://es5.github.io/#x15.4.4.18
-if (!Array.prototype.forEach) {
-
-  Array.prototype.forEach = function(callback, thisArg) {
-    var T, k;
-    if (this == null) {
-      throw new TypeError(' this is null or not defined');
-    }
-    var O = Object(this);
-    var len = O.length >>> 0;
-    if (typeof callback !== 'function') {
-      throw new TypeError(callback + ' is not a function');
-    }
-    if (arguments.length > 1) {
-      T = thisArg;
-    }
-    k = 0;
-    while (k < len) {
-      var kValue;
-      if (k in O) {
-        kValue = O[k];
-        callback.call(T, kValue, k, O);
-      }
-      k++;
-    }
-  };
-}
-// ----------------------------
 
 
 // factory function
 // ============================
 var AcrobatMailMerge =  function(mockApi){
 
+	// DEVELOPMENT
+	// ---------------------------------
 	// injects mock API if it's passed as an argument
 	// to the factory
 	if (mockApi) {
@@ -66,13 +39,14 @@ var AcrobatMailMerge =  function(mockApi){
 	}
 	// otherwise, assume we're running in AcroJS environment
 	// and we don't need to inject anything.
+	// ----------------------------------
 
 	var self = {};
 
 	// private vars
 	// ----------------------
-	var targetFieldsRegex = /<<(.+?)>>/g;
 	var targetFieldsRegexNoFlags = /<<(.+?)>>/;
+	var targetFieldsRegex = new RegExp(targetFieldsRegexNoFlags,'g');
 	var conditionalBlocksRegex = /\[[^\[]*?<>[^\]]*?\]|<|>|\[|\]/g;
 
 	// flag marks whether multiple fields each map to one record (false)
@@ -80,11 +54,9 @@ var AcrobatMailMerge =  function(mockApi){
 	var splitFields = false;
 	var printerName = undefined;
 	var lastIndexPrinted = undefined;
-
 	// ---------------------------
 
-	// returns an array of acrobat form fields which contain text
-	// that matches the target fields pattern ('<<value>>').
+	// searches document for valid form fields.
 	self.getTextBoxes = function(){
 		var self = this;
 		var textBoxes = [];
@@ -168,6 +140,9 @@ var AcrobatMailMerge =  function(mockApi){
 		return textBoxes;
 	};
 
+	// Opens and parses csv or tsv data using user input.
+	// TODO: choose one, find a way to read the filename (hard?)
+	// or find a way to implement sth like papa parse's guessing.
 	self.getData = function(){
 		
 		var binData;
@@ -193,46 +168,16 @@ var AcrobatMailMerge =  function(mockApi){
 		// stringifies binary stream
 		stringData = util.stringFromStream(binData);
 
-		// parses csv and converts to json.
-		// debug
-		//jsonData = this.csvToJson(stringData, '\t');
-		jsonData = eval(stringData);
+		// parses csv and converts to json
+		jsonData = this.csvToJson(stringData, '\t');
 
 		return jsonData;
 	};
 	
-	self.csvToJson = function(csv, separator){
-		// adapted from http://blaiprat.github.io/tsvToJson/
-		// mpingram - this is really bad, needs work. but if you
-		// handle it carefully it won't break
-	
-		separator = separator || '\t';
-    var info = csv.replace(/['']/g,'');
-    var lines = info.split('\n');
-    var firstLine = lines.shift().split(separator);
-    var json = []; 
-    
-    // blaiprat: Helper function to remove quotes
-    // and parse numeric values
-    var removeQuotes = function(string){
-        string = string.replace(/([''])/g, '\\$1');
-        if (!isNaN(string)){
-            string = parseFloat(string);
-        }
-        return string;
-    };
-    
-    lines.forEach( function(item){
-        var lineItem = item.split(separator),
-            jsonLineEntry = {};
-
-        lineItem.forEach(function(item, index){
-            jsonLineEntry[firstLine[index]] = removeQuotes(item);
-        });
-        json.push(jsonLineEntry);
-
-    });
-    return json;
+	// helper function	
+	self.csvToJson = function(input, separator, quote){
+		// DEVELOPMENT ONLY
+		return parser.parse(input, separator, quote).toJSON();
 	};
 
 	// configures acrobat printing settings with user input
@@ -290,7 +235,7 @@ var AcrobatMailMerge =  function(mockApi){
 		// when a pdf is printed. 
 		// This should be used in conjunction with a printer driver
 		// that does also not generate popup boxes on a print event
-		// for uninterrupted printing of each document. 
+		// for uninterrupted (ie silent) printing of each document. 
 		pp.bUI = false;
 		pp.bSilent=true;
 		pp.interactive = pp.constants.interactionLevel.automatic;	
@@ -391,7 +336,7 @@ var AcrobatMailMerge =  function(mockApi){
 				// replace <<fieldnames>> with <values>
 				textBoxes[k].value = textBoxes[k].value.replace( targetFieldsRegex , replacer);				
 				// delete any empty conditional blocks. '[ So <> empty ]'.
-				textBoxes[k].value = textBoxes[k].value.replace( ConditionalBlocksRegex, '' );
+				textBoxes[k].value = textBoxes[k].value.replace( conditionalBlocksRegex, '' );
 				
 				// if each text box corresponds to one record,
 				// we need to advance the counter to the next record.
