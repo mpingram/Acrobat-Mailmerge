@@ -23,7 +23,7 @@ beforeEach(function(){
 	util = api.util;
 	// if active test suite, turn this
 	// back off to see app.alert messages.
-	app.silentAlerts = false;
+	app.silentAlerts = true;
 });
 
 // helper function - needs to be called
@@ -49,7 +49,7 @@ describe('components: ', function(){
 
 
 	// done for now
-	xdescribe('merge.getTextBoxes', function(){
+	describe('merge.getTextBoxes', function(){
 		
 
 		it('should detect if there are no form fields', function(){
@@ -127,13 +127,16 @@ describe('components: ', function(){
 		
 
 		it('should stop the function on user cancellation', function(){
-			app.alertSelection = 2;
+			util.readFileIntoStream = function(){
+				// simulates user clicking cancel button
+				// on acrobat file browser
+				return null;
+			};
 			init();
 			expect(merge.getData).toThrow(userCancelException);
 		});
 
 		it('should return a valid response for simple data', function(){
-			app.alertSelection = 3;
 			init();
 			expect(merge.getData()).toEqual(util.mockDataValidResult);
 		});

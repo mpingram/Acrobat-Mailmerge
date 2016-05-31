@@ -112,11 +112,11 @@ var mockApi = function(){
 
 	self.util = {
 		// mock data to be read into stream
-		mockData: `test	field 2	field 3	field 4`+
-		`JUVO	RQNZ	ESNR	OZLY`+
-		`CMAI	XECU	UXYN	WNUR`+
-		`YCEE	ADHO	WMCE	WSNK`+
-		`HUUX	DCEN	DWUX	FCFX`+
+		mockData: `test	field 2	field 3	field 4\n`+
+		`JUVO	RQNZ	ESNR	OZLY\n`+
+		`CMAI	XECU	UXYN	WNUR\n`+
+		`YCEE	ADHO	WMCE	WSNK\n`+
+		`HUUX	DCEN	DWUX	FCFX\n`+
 		`CXAI	XDBT	INNP	MOZM`,
 		
 		mockDataValidResult: [

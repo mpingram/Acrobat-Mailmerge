@@ -60,7 +60,7 @@ var AcrobatMailMerge =  function(mockApi){
 	// flag marks whether multiple fields each map to one record (false)
 	// or multiple fields map to multiple records (true)
 	var splitFields = false;
-	var printerName = undefined;
+	var lastPrinterName = undefined;
 	var lastIndexPrinted = undefined;
 	// ---------------------------
 
@@ -149,15 +149,15 @@ var AcrobatMailMerge =  function(mockApi){
 	};
 
 	// Opens and parses csv or tsv data using user input.
-	// TODO: choose tsv or csv, or find a way to read the filename (hard?)
-	// or find a way to implement sth like papa parse's guessing.
+	// TODO: choose tsv or csv, or find a way to implementat
+	// sth like papa parse's guessing.
 	self.getData = function(){
 		
 		var binData;
 		var stringData;
 		var jsonData;
 		
-		app.alert(	'Please locate the data you want to merge. Files must be in Tab Delimited Values(tsv) -- DEBUG: NOPE SORRY JSON --  format.' + 
+		app.alert(	'Please locate the data you want to merge. Files must be in Tab Delimited Values(tsv) format.' + 
 					' Excel commonly saves this as a .txt file; if you open it up and it looks like '+
 					'a file separated by a bunch of tabs, you\'re probably fine.' + 
 					'\n Pressing \'Ok\' will open a file browser.', 4 );
@@ -166,8 +166,9 @@ var AcrobatMailMerge =  function(mockApi){
 		// If the user clicks 'cancel', method returns null and program terminates.
 		
 		// DEBUG: !!!! seems to read only the first character of the file
-		// update: bug due to windows native UTF-16 encoding; acroJS expects utf-8,
-		// and gives no options to change
+		// UPDATE: bug due to windows native UTF-16 encoding; acroJS expects utf-8,
+		// in which null byte corresponds to end of input. In utf-16, ascii characters
+		// have two bytes and guess what the second one is
 		binData = util.readFileIntoStream();
 		
 		if (binData === null){
@@ -175,7 +176,6 @@ var AcrobatMailMerge =  function(mockApi){
 		}
 		// stringifies binary stream
 		stringData = util.stringFromStream(binData);
-
 		// parses csv and converts to json
 		jsonData = self.csvToJson(stringData, '\t');
 
@@ -186,6 +186,7 @@ var AcrobatMailMerge =  function(mockApi){
 	self.csvToJson = function(input, separator, quote){
 		// DEVELOPMENT ONLY
 		return parser.parseData(input, separator, quote).toJSON();
+
 	};
 
 	// configures acrobat printing settings with user input
@@ -200,7 +201,7 @@ var AcrobatMailMerge =  function(mockApi){
 		
 		
 		// check for previous job's printer if any
-		if (printerName !== undefined){
+		if (lastPrinterName !== undefined){
 			
 			printerSelection = app.alert(	'You printed the previous job to printer: ' + printerName + '. ' +
 						'\nClick \'Yes\' to use this printer again and \'No\' to use a different printer.', 4, 3);
@@ -210,18 +211,18 @@ var AcrobatMailMerge =  function(mockApi){
 					throw new Error('UserCancelException');
 				// yes
 				case 4:
-					pp.printerName = printerName;
+					pp.printerName = lastPrinterName;
 					break;
 				// no
 				case 3:
-					printerName = undefined;
+					lastPrinterName = undefined;
 					break;
 			}
 			
 		} 
 		
 		// wonky logic so that previous if statement takes effect.
-		if( printerName === undefined ){
+		if( lastPrinterName === undefined ){
 		
 			// app.popUpMenu uses first element of array as menu title.
 			printers.unshift('Print to...');
@@ -235,7 +236,7 @@ var AcrobatMailMerge =  function(mockApi){
 			// else set printParams name to user's selection
 			} else {
 				pp.printerName  = printerSelection;
-				printerName = printerSelection;
+				lastPrinterName = printerSelection;
 			}
 		}
 		
