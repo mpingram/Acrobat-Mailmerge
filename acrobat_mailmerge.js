@@ -1,6 +1,14 @@
 // FOR DEVELOPMENT
 // --------------------
+try{ // home
 var csvParser = require('../../Utils/CSV_parser/lightweight-csv-parser.js');
+} catch(e) {
+	try{ // work
+		var csvParser = require('../lightweight-csv-parser/lightweight-csv-parser.js');
+	} catch(e) {
+		console.log(e);
+	}
+}
 var parser = csvParser();
 // --------------------
 
@@ -46,7 +54,7 @@ var AcrobatMailMerge =  function(mockApi){
 	// private vars
 	// ----------------------
 	var targetFieldsRegexNoFlags = /<<(.+?)>>/;
-	var targetFieldsRegex = new RegExp(targetFieldsRegexNoFlags,'g');
+	var targetFieldsRegex = new RegExp(targetFieldsRegexNoFlags.toString(),'g');
 	var conditionalBlocksRegex = /\[[^\[]*?<>[^\]]*?\]|<|>|\[|\]/g;
 
 	// flag marks whether multiple fields each map to one record (false)
@@ -58,7 +66,7 @@ var AcrobatMailMerge =  function(mockApi){
 
 	// searches document for valid form fields.
 	self.getTextBoxes = function(){
-		var self = this;
+
 		var textBoxes = [];
 		var thisBox;
 
@@ -141,7 +149,7 @@ var AcrobatMailMerge =  function(mockApi){
 	};
 
 	// Opens and parses csv or tsv data using user input.
-	// TODO: choose one, find a way to read the filename (hard?)
+	// TODO: choose tsv or csv, or find a way to read the filename (hard?)
 	// or find a way to implement sth like papa parse's guessing.
 	self.getData = function(){
 		
@@ -169,7 +177,7 @@ var AcrobatMailMerge =  function(mockApi){
 		stringData = util.stringFromStream(binData);
 
 		// parses csv and converts to json
-		jsonData = this.csvToJson(stringData, '\t');
+		jsonData = self.csvToJson(stringData, '\t');
 
 		return jsonData;
 	};
@@ -177,7 +185,7 @@ var AcrobatMailMerge =  function(mockApi){
 	// helper function	
 	self.csvToJson = function(input, separator, quote){
 		// DEVELOPMENT ONLY
-		return parser.parse(input, separator, quote).toJSON();
+		return parser.parseData(input, separator, quote).toJSON();
 	};
 
 	// configures acrobat printing settings with user input
@@ -278,9 +286,9 @@ var AcrobatMailMerge =  function(mockApi){
 		// ----------------------------------------------------
 		// debug: may have to use apply.
 		// actually maybe not.
-		var data = this.getData();
-		var textBoxes = this.getTextBoxes();
-		var pp = this.setPrintParams();
+		var data = self.getData();
+		var textBoxes = self.getTextBoxes();
+		var pp = self.setPrintParams();
 		console.println('set printparams');
 		
 

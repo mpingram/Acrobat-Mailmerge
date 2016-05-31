@@ -119,8 +119,41 @@ var mockApi = function(){
 		`HUUX	DCEN	DWUX	FCFX`+
 		`CXAI	XDBT	INNP	MOZM`,
 		
+		mockDataValidResult: [
+		  {
+			"test": "JUVO",
+			"field 2": "RQNZ",
+			"field 3": "ESNR",
+			"field 4": "OZLY"
+		  },
+		  {
+			"test": "CMAI",
+			"field 2": "XECU",
+			"field 3": "UXYN",
+			"field 4": "WNUR"
+		  },
+		  {
+			"test": "YCEE",
+			"field 2": "ADHO",
+			"field 3": "WMCE",
+			"field 4": "WSNK"
+		  },
+		  {
+			"test": "HUUX",
+			"field 2": "DCEN",
+			"field 3": "DWUX",
+			"field 4": "FCFX"
+		  },
+		  {
+			"test": "CXAI",
+			"field 2": "XDBT",
+			"field 3": "INNP",
+			"field 4": "MOZM"
+		  }
+		],
+		
 		readFileIntoStream: function(){
-			return null;
+			return 'This is where the binary data would be';
 		},
 		stringFromStream: function(){
 			return this.mockData;

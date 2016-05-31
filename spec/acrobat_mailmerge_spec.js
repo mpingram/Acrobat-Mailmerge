@@ -13,7 +13,18 @@ var util;
 // stores initialized mailmerge object
 // needs to be reinitialized after
 // changes are made to mock api's state
-var merge = mailmerge(api);
+var merge;
+
+beforeEach(function(){
+	// reinitialize api
+	api = mockApi();
+	app = api.app;
+	doc = api.doc;
+	util = api.util;
+	// if active test suite, turn this
+	// back off to see app.alert messages.
+	app.silentAlerts = false;
+});
 
 // helper function - needs to be called
 // after api's state is changed
@@ -30,25 +41,16 @@ var formFieldsException = new Error('No valid form fields.');
 
 // TESTING
 // ==================
+
 // components
 // ------------------
 describe('components: ', function(){
 
 
-	beforeEach(function(){
-			// reinitialize api
-			api = mockApi();
-			app = api.app;
-			doc = api.doc;
-			util = api.util;
-			// if active test suite, turn this
-			// back off to see app.alert messages.
-			app.silentAlerts = true;
-		});
 
-
-
-	describe('merge.getTextBoxes', function(){
+	// done for now
+	xdescribe('merge.getTextBoxes', function(){
+		
 
 		it('should detect if there are no form fields', function(){
 			doc.fields = [];
@@ -123,15 +125,18 @@ describe('components: ', function(){
 
 	describe('merge.getData', function(){
 		
-		app.silentAlerts = false;
 
 		it('should stop the function on user cancellation', function(){
-			app.alertResponse = 2;
+			app.alertSelection = 2;
 			init();
 			expect(merge.getData).toThrow(userCancelException);
 		});
 
-
+		it('should return a valid response for simple data', function(){
+			app.alertSelection = 3;
+			init();
+			expect(merge.getData()).toEqual(util.mockDataValidResult);
+		});
 
 	});
 
