@@ -1,8 +1,7 @@
 'use strict';
 
 var mailmerge = require('../acrobat_mailmerge.js');
-var mockApi = require('../mock_api/mock_api.js');
-var mockData = require('../mock_api/mock_api.js');
+var createMockApi = require('../mock_api/mock_api.js');
 
 // initialize api
 // ------------------
@@ -10,19 +9,18 @@ var api;
 var app;
 var doc;
 var util; 
-// stores initialized mailmerge object
-// needs to be reinitialized after
+// stores initialized mailmerge object.
+// Needs to be reinitialized after
 // changes are made to mock api's state
 var merge;
 
 beforeEach(function(){
 	// reinitialize api
-	api = mockApi();
+	api = createMockApi();
 	app = api.app;
 	doc = api.doc;
 	util = api.util;
-	// if active test suite, turn this
-	// back off to see app.alert messages.
+	// set this to false to see app.alert messages in the console.
 	app.silentAlerts = true;
 });
 
@@ -46,9 +44,6 @@ var formFieldsException = new Error('No valid form fields.');
 // ------------------
 describe('components: ', function(){
 
-
-
-	// done for now
 	describe('merge.getTextBoxes', function(){
 		
 
@@ -144,15 +139,16 @@ describe('components: ', function(){
 	});
 
 	describe('merge.csvToJson', function(){
-
+		// see tests for lightweight-csv-parser
 	});
 
 	describe('merge.setPrintParams', function(){
-
+		
 	});
 
 
 	describe('mailmerge.print', function(){
+		
 	});
 
 });

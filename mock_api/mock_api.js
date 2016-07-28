@@ -1,9 +1,8 @@
 // mock Acrobat JS API factory
 // -----------------------------
-var mockApi = function(){
+var createMockApi = function(){
+	
 	var self = {};
-
-
 
 	self.app = {
 		// stores value of mock user response:
@@ -164,4 +163,4 @@ var mockApi = function(){
 };
 // ----------------------------
 
-module.exports = mockApi;
+module.exports = createMockApi;
